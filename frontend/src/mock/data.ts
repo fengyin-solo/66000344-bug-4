@@ -1,4 +1,4 @@
-import type { CognateSet, LanguageFamily } from '../types'
+import type { CognateSet, LanguageFamily, WordLink, WordNode } from '../types'
 
 export const LANGUAGE_FAMILIES: LanguageFamily[] = [
   { id: 'ie', name: '印欧语系', color: '#3b82f6', languages: ['英语','法语','德语','西班牙语','俄语','拉丁语'], era: '公元前4000年' },
@@ -25,16 +25,20 @@ export const COGNATE_SETS: CognateSet[] = [
   { root: '*gʷen-', meaning: '女人', languages: { '英语': 'queen', '德语': 'Frau', '俄语': 'жена' }, period: 'PIE', family: 'ie' },
 ]
 
-export function buildGraph() {
-  const nodes: any[] = []
-  const links: any[] = []
-  COGNATE_SETS.forEach((cs, ci) => {
-    const rootId = 'root_' + ci
-    nodes.push({ id: rootId, word: cs.root, language: 'Proto-IE', meaning: cs.meaning, family: 'ie', era: '公元前5000年' })
+export function rootNodeId(root: string) {
+  return 'root:' + root
+}
+
+export function buildGraph(sets: CognateSet[] = COGNATE_SETS): { nodes: WordNode[]; links: WordLink[] } {
+  const nodes: WordNode[] = []
+  const links: WordLink[] = []
+  sets.forEach((cs) => {
+    const rootId = rootNodeId(cs.root)
+    nodes.push({ id: rootId, word: cs.root, language: 'Proto-IE', meaning: cs.meaning, family: cs.family, era: cs.period })
     Object.entries(cs.languages).forEach(([lang, word]) => {
       if (!word || word === '-') return
-      const nid = ci + '_' + lang
-      nodes.push({ id: nid, word, language: lang, meaning: cs.meaning, family: 'ie', era: '现代' })
+      const nid = rootId + '|' + lang
+      nodes.push({ id: nid, word, language: lang, meaning: cs.meaning, family: cs.family, era: '现代' })
       links.push({ source: rootId, target: nid, type: 'derived' })
     })
   })
